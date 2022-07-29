@@ -1,7 +1,9 @@
-cmake_minimum_required(VERSION 0.10)
+cmake_minimum_required(VERSION 3.10)
 project(cseem)
-
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_PROJECT_VERSION "1")
+set(CMAKE_PROJECT_VERSION_MAJOR "1")
+set(CMAKE_PROJECT_VERSION_MINOR "1")
+set(CMAKE_PROJECT_VERSION_PATCH "1")
 
 include(FetchContent)
 FetchContent_Declare(

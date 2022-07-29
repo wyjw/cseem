@@ -57,12 +57,3 @@ class SimulRun {
     int hit_count;
     int miss_count;
 };
-
-// Parser
-class Parser {
-    
-};
-
-class LDFMParser : public Parser {
-    
-};
