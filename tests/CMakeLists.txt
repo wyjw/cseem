@@ -13,12 +13,20 @@ target_link_libraries(
 include(GoogleTest)
 
 # add all the extra binaries to compare
-add_custom_target("copy")
+add_custom_target("copycachescript")
 add_custom_command(
-    TARGET copy PRE_BUILD
+    TARGET copycachescript POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy
             ${CMAKE_SOURCE_DIR}/tests/from_cache_lib.py
             ${CMAKE_CURRENT_BINARY_DIR}/from_cache_lib.py
+)
+
+add_custom_target("copycachelist")
+add_custom_command(
+    TARGET copycachelist POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy
+            ${CMAKE_SOURCE_DIR}/tests/cache_lib.txt
+            ${CMAKE_CURRENT_BINARY_DIR}/cache_lib.txt
 )
 
 find_package(PythonInterp)
@@ -28,7 +36,8 @@ add_custom_target(
     # BYPRODUCTS  
     COMMENT "Generating comparison cache libs."
 )
-add_dependencies(parser_test copy)
+add_dependencies(parser_test copycachescript)
+add_dependencies(parser_test copycachelist)
 add_dependencies(parser_test run)
 
 gtest_discover_tests(parser_test)

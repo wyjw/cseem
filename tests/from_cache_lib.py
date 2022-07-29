@@ -3,6 +3,14 @@ import subprocess
 import pathlib
 
 binaries = ['FindHao']
+
+# build instructions
+def buildFindHao(dirname):
+    if not pathlib.Path(dirname + '/build').is_dir():
+        subprocess.run(['mkdir', 'build'])
+        subprocess.run(['cmake', dirname + '/.'])
+        subprocess.run(['make', '-j' + build_threads])
+
 how_to_build = {'FindHao': buildFindHao}
 build_threads = 4
 
@@ -18,7 +26,7 @@ def read_file(filename):
             fp = pathlib.Path(__file__).parent.resolve()
 
             if user in binaries and not pathlib.Path(user).is_dir():
-                get_from_git_link(line, user)
+                get_from_git_link(line.strip(), user)
 
 def get_from_git_link(link, dirname):
     """
@@ -26,16 +34,11 @@ def get_from_git_link(link, dirname):
 
     @param link: git links of binaries 
     """
-    cmd = ['git', 'clone', link, dirname + '/']
+    print("DIR", dirname, "LINK", link)
+    cmd = ['git', 'clone', link, dirname]
     subprocess.run(cmd)
 
     how_to_build[dirname]()
-
-def buildFindHao(dirname):
-    if not pathlib.Path(dirname + '/build').is_dir():
-        subprocess.run(['mkdir', 'build'])
-        subprocess.run(['cmake', dirname + '/.'])
-        subprocess.run(['make', '-j' + build_threads])
 
 def parse_result():
     pass
