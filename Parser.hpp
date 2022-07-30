@@ -1,3 +1,6 @@
+#include <iostream>
+#include <string>
+
 // Parser
 class Parser {
     public:
@@ -9,13 +12,15 @@ class Parser {
         if (!f)
             throw Error(std::fmt("%s: File read error ", path.c_str()));
 
-        Parse(dynamic_cast<std::istream *>(&f));
+        Parse(dynamic_cast<std::ifstream *>(&f));
         f.close();
     }
 
-    void Parse(std::istream *f);
+    void Parse(std::ifstream *f);
 };
 
 class LDFMParser : public Parser {
-    
+    public:
+    char input = "l 0x20022000";
+    fscanf( 
 };

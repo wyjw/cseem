@@ -101,4 +101,5 @@ def parse_result():
     pass
 
 if __name__ == "__main__":
-    read_file('cache_lib.txt') 
+    # read_file('cache_lib.txt') 
+    pass

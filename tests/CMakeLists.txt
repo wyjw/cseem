@@ -1,5 +1,9 @@
 enable_testing()
 
+include_directories(
+    ${CMAKE_SOURCE_DIR}
+)
+
 add_executable(
     parser_test
     parser_test.cpp
@@ -8,6 +12,18 @@ add_executable(
 target_link_libraries(
     parser_test
     GTest::gtest_main
+    cachelib
+)
+
+add_executable(
+    set_tag_test
+    set_tag_test.cpp
+)
+
+target_link_libraries(
+    set_tag_test
+    GTest::gtest_main
+    cachelib
 )
 
 include(GoogleTest)
@@ -41,3 +57,4 @@ add_dependencies(parser_test copycachelist)
 add_dependencies(parser_test run)
 
 gtest_discover_tests(parser_test)
+gtest_discover_tests(set_tag_test)
