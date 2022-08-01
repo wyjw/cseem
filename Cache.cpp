@@ -27,7 +27,7 @@ int Cache::check_cache_hit(unsigned addr, int type) {
     auto set = get_set(addr);
     auto tag = get_tag(addr);
     auto base = set * associativity;
-    std::span local{caches.data() + base, associativity}; //TODO: why?
+    std::span local{this->caches.data() + base, associativity}; //TODO: why?
 
     int invalid_index = 1;
     int index;
@@ -91,7 +91,9 @@ int Cache::get_free_line(unsigned addr, int invalid_index) {
     tags[index] = &tag;
     // dirtys[index] = type; 
 
-    this->do_updates(addr, index); 
+    this->do_updates(addr, index);
+    
+    return index;
 }
 
 int Cache::do_updates(unsigned addr, int index) {
@@ -105,6 +107,8 @@ int Cache::do_updates(unsigned addr, int index) {
         if (*p <= *priority[index] && *p < associativity) return *p + 1;
         else return *p;
     };
+
+    return 0; 
 }
 
 int Cache::do_cache_op(unsigned addr, int is_read)
@@ -133,4 +137,57 @@ void Cache::dump_stats() {
     std::cout << "MISS:" << this->__stats.cache_miss_count << std::endl;
     std::cout << "READS:" << this->__stats.cache_read_count << std::endl;
     std::cout << "WRITES:" << this->__stats.cache_write_count << std::endl;
+}
+
+// pretty print the cache state
+void Cache::dump_state() {
+    // std::cout << "" << std::endl;
+    std::vector<std::string> columns;
+    std::vector<int> column_widths;
+    std::string separator = "|";
+    int table_width;
+
+    columns.push_back("Index");
+    column_widths.push_back(4);
+    table_width += 4 + separator.size();
+
+    columns.push_back("Valid");
+    column_widths.push_back(4);
+    table_width += 4 + separator.size();
+
+    columns.push_back("Tag");
+    column_widths.push_back(32);
+    table_width += 32 + separator.size();
+
+    columns.push_back("Data");
+    column_widths.push_back(64);
+    table_width += 64 + separator.size();
+
+    columns.push_back("DirtyBit");
+    column_widths.push_back(4);
+    table_width += 4 + separator.size();
+
+    int len = 0;
+    for (auto c : caches) {
+        len++;
+        for (auto i = 0; i <= columns.size(); i++) {
+            // columns[i] 
+            // column_widths[i]
+
+            std::cout << std::setw(column_widths[i]);
+            std::string val;
+            if (columns[i] == "Index") {
+                std::cout << len;
+            }
+            else if (columns[i] == "Valid") {
+                std::cout << c.valid;
+            } else if (columns[i] == "Tag") {
+                std::cout << c.__tag;
+            } else if (columns[i] == "Data") {
+                std::cout << c.buf;
+            } else if (columns[i] == "DirtyBit") {
+                std::cout << c.dirty; 
+            }
+        }
+    } 
 }

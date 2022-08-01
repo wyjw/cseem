@@ -5,6 +5,7 @@
 #include <bit>
 #include <assert.h>
 #include <algorithm>
+#include <iomanip>
 
 #ifndef PROJECTNAME
 #define PROJECTNAME cseem
@@ -76,6 +77,7 @@ class Cache {
 
     int check_cache_hit(unsigned addr, int type=0);
     void dump_stats();
+    void dump_state();
     //int get_free_line(int level);
     int get_free_line(unsigned addr, int invalid_index=0);
     int do_updates(unsigned addr, int index);
