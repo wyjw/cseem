@@ -29,19 +29,20 @@ Cache::~Cache ()
 {
 }
 
-int Cache::check_cache_hit(unsigned addr, int type) {
+int Cache::check_cache_hit(unsigned addr, int* invalid_index, int type) {
     auto set = get_set(addr);
     auto tag = get_tag(addr);
     auto base = set * associativity;
     std::span local{this->caches.data() + base, associativity}; //TODO: why?
 
-    int invalid_index = 1;
+    *invalid_index = -1;
+
     int index;
     bool hit;
 
     for (auto i = 0;  i < local.size(); i++) {
         if (!local[i].valid) {
-            auto invalid_index = i;
+            *invalid_index = i;
             continue;
         }
         auto ltag = local[i].__tag;
@@ -71,31 +72,30 @@ unsigned Cache::get_tag(unsigned address) {
 }
 
 int Cache::get_free_line(unsigned addr, int invalid_index) {
+    auto set = get_set(addr);
+    auto tag = get_tag(addr);
+    auto base = set * associativity;
+    std::span local{this->caches.data() + base, associativity}; //TODO: why?
+    
     auto dirty_wb = false;
    // try to get an invalid index
     int index;
-    if (true) {
-        index = 0;
+    if (invalid_index >= 0) {
+        index = invalid_index;
+        local[index].valid = true;
     }
     else {
-        std::vector<unsigned *> priority;
-        for (auto obj : this->caches) {
-            priority.push_back(&obj.CacheMeta.__lru_count);
-        } 
-        assert(priority.size() == this->caches.size() == num_blocks);
-        auto max_element = std::ranges::max_element(priority);
-        index = std::distance(begin(priority), max_element);
+        auto max_element = std::max_element(this->caches.begin(), this->caches.end(), 
+                [](const class CacheLine &a, const class CacheLine &b) 
+                {
+                    return a.CacheMeta.__count < b.CacheMeta.__count;
+                });
+        index = std::distance(this->caches.begin(), max_element);
         // dirty_wb = local_dirty[index];
     }
-    std::vector<unsigned *> tags;
-    // std::vector<bool *> dirtys;
-    for (auto obj : this->caches) {
-        tags.push_back(&obj.__tag);
-        // dirtys.push_back(&obj.dirty);
-    }
-    auto tag = this->get_tag(addr);
-    *tags[index] = tag;
-    // dirtys[index] = type; 
+    
+    local[index].__tag = tag;
+    // this->caches[index].dirty |= type; 
 
     this->do_updates(addr, index);
     
@@ -103,31 +103,29 @@ int Cache::get_free_line(unsigned addr, int invalid_index) {
 }
 
 int Cache::do_updates(unsigned addr, int index) {
-    std::vector<unsigned *> priority;
-    for (auto obj : this->caches) {
-        priority.push_back(&obj.CacheMeta.__lru_count);
-    }
-     
-    if (!(priority.size() == this->caches.size() && this->caches.size() == num_blocks)) {
-        throw std::runtime_error("Cache not right size!");
-    }
-    
-    for (auto p : priority) { 
-        if (*p <= *priority[index] && *p < associativity) return *p + 1;
-        else return *p;
-    };
+    std::transform(std::begin(this->caches), std::end(this->caches),
+            std::begin(this->caches), 
+            [&](CacheLine a) {
+                if (a.CacheMeta.__count < this->caches[index].CacheMeta.__count
+                        && a.CacheMeta.__count < associativity)
+                    a.CacheMeta.__count += 1;
+                return a;
+            });
 
+    // current block has highest
+    this->caches[index].CacheMeta.__count = 0;
     return 0; 
 }
 
 int Cache::do_cache_op(unsigned addr, int is_read)
-{
-    auto index = this->check_cache_hit(addr);
+{  
+    int invalid_index;
+    auto index = this->check_cache_hit(addr, &invalid_index);
     if (index) {
         this->__stats.cache_hit_count++;
     }
     else {
-        auto index = this->get_free_line(addr);
+        auto index = this->get_free_line(addr, invalid_index);
         // this->set_cache_item(item, addr);
         if (is_read) {
             this->__stats.cache_read_count++;
@@ -146,6 +144,7 @@ void Cache::dump_stats() {
     std::cout << "MISS:" << this->__stats.cache_miss_count << std::endl;
     std::cout << "READS:" << this->__stats.cache_read_count << std::endl;
     std::cout << "WRITES:" << this->__stats.cache_write_count << std::endl;
+    std::cout << "HITRATE:" << this->__stats.hit_rate() << std::endl;
 }
 
 // pretty print the cache state
@@ -157,46 +156,55 @@ void Cache::dump_state() {
     int table_width;
 
     columns.push_back("Index");
-    column_widths.push_back(4);
-    table_width += 4 + separator.size();
+    column_widths.push_back(8);
+    table_width += 8 + separator.size();
 
     columns.push_back("Valid");
-    column_widths.push_back(4);
-    table_width += 4 + separator.size();
+    column_widths.push_back(8);
+    table_width += 8 + separator.size();
 
     columns.push_back("Tag");
-    column_widths.push_back(32);
-    table_width += 32 + separator.size();
+    column_widths.push_back(12);
+    table_width += 12 + separator.size();
 
     columns.push_back("Data");
-    column_widths.push_back(64);
-    table_width += 64 + separator.size();
+    column_widths.push_back(12);
+    table_width += 12 + separator.size();
 
     columns.push_back("DirtyBit");
-    column_widths.push_back(4);
-    table_width += 4 + separator.size();
-
+    column_widths.push_back(8);
+    table_width += 8 + separator.size();
+    
+    // first line -- header of table
+    for (auto j = 0; j < columns.size(); j++) {
+        std::cout << std::setw(column_widths[j]) << columns[j];
+        std::cout << separator;
+    }
+    std::cout << std::endl;
+    
     int len = 0;
     for (auto c : caches) {
-        len++;
-        for (auto i = 0; i <= columns.size(); i++) {
+     
+        for (auto i = 0; i < columns.size(); i++) {
             // columns[i] 
             // column_widths[i]
 
-            std::cout << std::setw(column_widths[i]);
-            std::string val;
             if (columns[i] == "Index") {
-                std::cout << len;
+                std::cout << std::setw(column_widths[i]) << len;
             }
             else if (columns[i] == "Valid") {
-                std::cout << c.valid;
+                std::cout << std::setw(column_widths[i]) << c.valid;
             } else if (columns[i] == "Tag") {
-                std::cout << c.__tag;
+                std::cout << std::setw(column_widths[i]) << c.__tag;
             } else if (columns[i] == "Data") {
-                std::cout << c.buf;
+                std::cout << std::setw(column_widths[i]) << c.buf;
             } else if (columns[i] == "DirtyBit") {
-                std::cout << c.dirty; 
+                std::cout << std::setw(column_widths[i]) << c.dirty;
             }
+
+            std::cout << separator;
         }
+        std::cout << std::endl;
+        len++;
     } 
 }

@@ -89,7 +89,7 @@ class Cache {
             WritePolicy wp);
     ~Cache();
 
-    int check_cache_hit(unsigned addr, int type=0);
+    int check_cache_hit(unsigned addr, int* invalid_index, int type = 0);
     void dump_stats();
     void dump_state();
     //int get_free_line(int level);

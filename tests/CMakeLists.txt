@@ -71,5 +71,18 @@ add_dependencies(parser_test copycachelist)
 add_dependencies(parser_test copytrace)
 add_dependencies(parser_test run)
 
+add_executable(
+    cache_utils_test
+    cache_utils_test.cpp
+)
+
+target_link_libraries(
+    cache_utils_test
+    GTest::gtest_main
+    cachelib
+    parserlib
+)
+
 gtest_discover_tests(parser_test)
 gtest_discover_tests(set_tag_test)
+gtest_discover_tests(cache_utils_test)
