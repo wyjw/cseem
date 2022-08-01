@@ -1,26 +1,31 @@
+#ifndef PARSER_H
+#define PARSER_H
+
 #include <iostream>
 #include <string>
+#include <sstream>
+#include <fstream>
+#include <exception>
+#include <utility>
+#include "Cache.hpp"
 
 // Parser
 class Parser {
     public:
     Parser ();
-    
-    void Load(const std::string &path) {
-        this->path = path;
-        std::ifstream f(path);
-        if (!f)
-            throw Error(std::fmt("%s: File read error ", path.c_str()));
+    ~Parser ();
+    void Load(const std::string &path, std::unique_ptr<Cache> &c, const std::string format);
+    void Parse(std::ifstream *f, std::unique_ptr<Cache> &c, const std::string format);
+    std::unique_ptr<std::vector<std::pair<int,int>>> ParseWithHistory(std::ifstream *f, std::unique_ptr<Cache> &_c, const std::string format);
 
-        Parse(dynamic_cast<std::ifstream *>(&f));
-        f.close();
-    }
-
-    void Parse(std::ifstream *f);
+    std::string format;
+    std::string path;
 };
 
 class LDFMParser : public Parser {
     public:
-    char input = "l 0x20022000";
-    fscanf( 
+    std::string input = "l 0x20022000";
+     
 };
+
+#endif

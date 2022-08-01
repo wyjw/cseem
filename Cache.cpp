@@ -19,8 +19,14 @@ Cache::Cache (const std::string &name,
     this->set_mask = sets - 1;
     this->set_bits = std::popcount(set_mask);
     this->num_blocks = capacity / block_size;
-    caches.resize(num_blocks);
+
+    this->caches = std::vector<CacheLine>();
+    this->caches.resize(num_blocks);
     this->tag_offset = set_offset + set_bits;
+}
+
+Cache::~Cache ()
+{
 }
 
 int Cache::check_cache_hit(unsigned addr, int type) {
@@ -69,7 +75,7 @@ int Cache::get_free_line(unsigned addr, int invalid_index) {
    // try to get an invalid index
     int index;
     if (true) {
-        auto index = 0;
+        index = 0;
     }
     else {
         std::vector<unsigned *> priority;
@@ -78,7 +84,7 @@ int Cache::get_free_line(unsigned addr, int invalid_index) {
         } 
         assert(priority.size() == this->caches.size() == num_blocks);
         auto max_element = std::ranges::max_element(priority);
-        auto index = std::distance(begin(priority), max_element);
+        index = std::distance(begin(priority), max_element);
         // dirty_wb = local_dirty[index];
     }
     std::vector<unsigned *> tags;
@@ -88,7 +94,7 @@ int Cache::get_free_line(unsigned addr, int invalid_index) {
         // dirtys.push_back(&obj.dirty);
     }
     auto tag = this->get_tag(addr);
-    tags[index] = &tag;
+    *tags[index] = tag;
     // dirtys[index] = type; 
 
     this->do_updates(addr, index);
@@ -100,8 +106,11 @@ int Cache::do_updates(unsigned addr, int index) {
     std::vector<unsigned *> priority;
     for (auto obj : this->caches) {
         priority.push_back(&obj.CacheMeta.__lru_count);
-    } 
-    assert(priority.size() == this->caches.size() == num_blocks);
+    }
+     
+    if (!(priority.size() == this->caches.size() && this->caches.size() == num_blocks)) {
+        throw std::runtime_error("Cache not right size!");
+    }
     
     for (auto p : priority) { 
         if (*p <= *priority[index] && *p < associativity) return *p + 1;

@@ -1,3 +1,6 @@
+#ifndef CACHE_H
+#define CACHE_H
+
 #include <string>
 #include <vector>
 #include <span>
@@ -42,6 +45,17 @@ class Cache {
         //unsigned flag;
         bool valid;
         bool dirty;
+        
+        public:
+        CacheLine () {
+            __tag = 0;
+            CacheMeta.__count = 0;
+            CacheMeta.__lru_count = 0;
+            CacheMeta.__fifo_count = 0;
+            buf = NULL;
+            valid = false;
+            dirty = false;
+        }
     };
 
     // Configuration parameters
@@ -95,3 +109,4 @@ class Cache {
     };
     struct Stats __stats;
 };
+#endif

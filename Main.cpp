@@ -1,16 +1,18 @@
 #include "Cache.hpp"
+#include "Parser.hpp"
 #include <vector>
 #include <algorithm>
 #include <stdexcept>
 #include <iostream>
+#include <memory>
 
 // Pass simple, one character command line options
 // Taken from: https://stackoverflow.com/a/868894
 class ArgParser {
     public:
         ArgParser (int &argc, char **argv) {
-            for (int i; i < argc; ++i) {
-                
+            for (int i = 1; i < argc; ++i) {
+               this->tokens.push_back(std::string(argv[i])); 
             }
         }
         
@@ -34,8 +36,8 @@ class ArgParser {
 };
 
 // Main runner
-int main(int argc, char **argv) {
-    auto experiment = new SimulRun();
+int main(int argc, char *argv[]) {
+    // auto experiment = new SimulRun();
     auto parser = new Parser();
     auto argparser = ArgParser(argc, argv);
 
@@ -44,9 +46,12 @@ int main(int argc, char **argv) {
     }
 
     const std::string &filename = argparser.getCmdOption("-f");
-    if (!filename.empty()) {
-        throw Error(std::fmt("Filename is empty!")); 
+    if (filename.empty()) {
+        std::cout << "Please input a filename under -f" << std::endl;
+        throw std::runtime_error("Filename is empty!"); 
     }
 
-    parser->Load(filename);
+    auto c = std::make_unique<Cache>("cache1", 1, 16, 1024, Cache::ReplacementPolicy::PolicyLRU, Cache::WritePolicy::PolicyWriteback);
+
+    parser->Load(filename, c, "hw");
 }

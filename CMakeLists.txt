@@ -25,5 +25,18 @@ add_library(cachelib
     Cache.cpp
 )
 
+add_library(parserlib
+    Parser.hpp
+    Parser.cpp
+)
+
+add_executable(main
+    Cache.hpp
+    Parser.hpp
+    Main.cpp
+    Cache.cpp
+    Parser.cpp
+)
+
 enable_testing()
 add_subdirectory(tests)
