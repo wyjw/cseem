@@ -11,7 +11,7 @@ Cache::Cache (const std::string &name,
     this->block_size = block_size;
     this->associativity = associativity;
     this->capacity = capacity;
-    this->rp = PolicyLRU;
+    this->rp = rp;
     this->wp = PolicyWriteback; 
     
     this->set_offset = std::popcount(block_size - 1);
@@ -23,6 +23,8 @@ Cache::Cache (const std::string &name,
     this->caches = std::vector<CacheLine>();
     this->caches.resize(num_blocks);
     this->tag_offset = set_offset + set_bits;
+
+    this->clock_count = 1;
 }
 
 Cache::~Cache ()
@@ -112,7 +114,17 @@ int Cache::get_free_line(unsigned addr, int invalid_index) {
             index = std::distance(std::begin(local), min_element);
             // std::cout << "DISTANCE IS" << index << std::endl;
             dirty_wb = local[index].dirty;
-       }
+       }  
+       else if (this->rp == ReplacementPolicy::PolicyFIFO) {
+            auto min_element = std::min_element(local.begin(), local.end(),
+                    [](const class CacheLine &a, const class CacheLine &b) 
+                    {
+                        return a.CacheMeta.__fifo_count < b.CacheMeta.__fifo_count;
+                    });
+            index = std::distance(std::begin(local), min_element);
+            std::cout << "DISTANCE IS" << index << std::endl;
+            dirty_wb = local[index].dirty;
+        }
     }
     
     local[index].__tag = tag;
@@ -120,12 +132,13 @@ int Cache::get_free_line(unsigned addr, int invalid_index) {
     return index;
 }
 
-int Cache::do_updates(unsigned addr, int index) {
+int Cache::do_updates_only_on_write(unsigned addr, int index) {
     auto set = get_set(addr);
     auto tag = get_tag(addr);
     auto base = set * associativity;
     std::span local{this->caches.data() + base, associativity}; //TODO: why?
-    
+   
+    /* 
     std::transform(std::begin(local), std::end(local),
             std::begin(local), 
             [&](CacheLine &a) {
@@ -135,6 +148,32 @@ int Cache::do_updates(unsigned addr, int index) {
                 return a;
             });
 
+    // current block has highest
+    local[index].CacheMeta.__count = 0;
+    */
+    // local[index].CacheMeta.__lru_count = 0;
+    local[index].CacheMeta.__fifo_count = this->clock_count;
+    // local[index].CacheMeta.__lru_count = this->clock_count;
+
+    return 0; 
+}
+
+int Cache::do_updates(unsigned addr, int index) {
+    auto set = get_set(addr);
+    auto tag = get_tag(addr);
+    auto base = set * associativity;
+    std::span local{this->caches.data() + base, associativity}; //TODO: why?
+   
+    /* 
+    std::transform(std::begin(local), std::end(local),
+            std::begin(local), 
+            [&](CacheLine &a) {
+                if (a.CacheMeta.__count <= local[index].CacheMeta.__count
+                        && a.CacheMeta.__count < associativity)
+                    a.CacheMeta.__count += 1;
+                return a;
+            });
+    */
     // current block has highest
     local[index].CacheMeta.__count = 0;
     // local[index].CacheMeta.__lru_count = 0;
@@ -173,7 +212,8 @@ int Cache::do_cache_op(unsigned addr, int is_read)
         }
         else {
             this->__stats.cache_store_miss_count++;
-        }
+        } 
+        this->do_updates_only_on_write(addr, rindex);
     }
     this->do_updates(addr, rindex);
 
