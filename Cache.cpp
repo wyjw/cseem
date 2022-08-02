@@ -83,6 +83,9 @@ int Cache::get_free_line(unsigned addr, int invalid_index) {
     if (invalid_index >= 0) {
         index = invalid_index;
         local[index].valid = true;
+
+        // check that local points to the same thing
+        assert(&local[index] == &this->caches.data()[base + index]);
     }
     else {
         auto max_element = std::max_element(this->caches.begin(), this->caches.end(), 
@@ -114,6 +117,9 @@ int Cache::do_updates(unsigned addr, int index) {
 
     // current block has highest
     this->caches[index].CacheMeta.__count = 0;
+    this->caches[index].CacheMeta.__lru_count = 0;
+    this->caches[index].CacheMeta.__fifo_count = 0;
+
     return 0; 
 }
 
@@ -148,7 +154,7 @@ void Cache::dump_stats() {
 }
 
 // pretty print the cache state
-void Cache::dump_state() {
+void Cache::dump_state(bool meta) {
     // std::cout << "" << std::endl;
     std::vector<std::string> columns;
     std::vector<int> column_widths;
@@ -174,7 +180,21 @@ void Cache::dump_state() {
     columns.push_back("DirtyBit");
     column_widths.push_back(8);
     table_width += 8 + separator.size();
-    
+   
+    if (meta) {
+        columns.push_back("Count");
+        column_widths.push_back(8);
+        table_width += 8 + separator.size();
+
+        columns.push_back("LRUCount");
+        column_widths.push_back(12);
+        table_width += 12 + separator.size();
+
+        columns.push_back("FIFOCount");
+        column_widths.push_back(12);
+        table_width += 12 + separator.size();
+    }
+
     // first line -- header of table
     for (auto j = 0; j < columns.size(); j++) {
         std::cout << std::setw(column_widths[j]) << columns[j];
@@ -200,8 +220,13 @@ void Cache::dump_state() {
                 std::cout << std::setw(column_widths[i]) << c.buf;
             } else if (columns[i] == "DirtyBit") {
                 std::cout << std::setw(column_widths[i]) << c.dirty;
+            } else if (columns[i] == "Count") {
+                std::cout << std::setw(column_widths[i]) << c.CacheMeta.__count;
+            } else if (columns[i] == "LRUCount") {
+                std::cout << std::setw(column_widths[i]) << c.CacheMeta.__lru_count;
+            } else if (columns[i] == "FIFOCount") {
+                std::cout << std::setw(column_widths[i]) << c.CacheMeta.__fifo_count;
             }
-
             std::cout << separator;
         }
         std::cout << std::endl;

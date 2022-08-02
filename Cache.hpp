@@ -33,7 +33,8 @@ class Cache {
 
     class CacheLine {
         friend class Cache;
-
+        
+        public:
         unsigned __tag;
         union {
           unsigned __count;
@@ -46,7 +47,6 @@ class Cache {
         bool valid;
         bool dirty;
         
-        public:
         CacheLine () {
             __tag = 0;
             CacheMeta.__count = 0;
@@ -91,7 +91,7 @@ class Cache {
 
     int check_cache_hit(unsigned addr, int* invalid_index, int type = 0);
     void dump_stats();
-    void dump_state();
+    void dump_state(bool meta = false);
     //int get_free_line(int level);
     int get_free_line(unsigned addr, int invalid_index=0);
     int do_updates(unsigned addr, int index);
