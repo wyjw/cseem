@@ -56,6 +56,9 @@ add_custom_command(
     COMMAND ${CMAKE_COMMAND} -E copy
             ${CMAKE_SOURCE_DIR}/examples/hwparse2.txt
             ${CMAKE_CURRENT_BINARY_DIR}/examples/hwparse2.txt
+    COMMAND ${CMAKE_COMMAND} -E copy
+            ${CMAKE_SOURCE_DIR}/examples/hwparse4.txt
+            ${CMAKE_CURRENT_BINARY_DIR}/examples/hwparse4.txt
 )
 
 find_package(PythonInterp)

@@ -41,3 +41,21 @@ TEST(ParserTest, test_parse_2) {
     EXPECT_EQ(_hist->data()[4].first, 0x1001ffff);
     EXPECT_EQ(_hist->data()[4].second, 0);
 }
+
+TEST(ParserTest, test_parse_3) {
+    auto c = std::make_unique<Cache>("cache1", 4, 32, 32768, Cache::ReplacementPolicy::PolicyLRU, Cache::WritePolicy::PolicyWriteback);
+
+    auto v = Parser();
+    std::ifstream f("examples/hwparse4.txt");
+    if (!f)
+    {
+        std::cout << "No such file!" << std::endl;
+    }
+    auto _hist = v.ParseWithHistory(&f, c, "simple");
+    
+    EXPECT_EQ(_hist->size(), 11);
+    EXPECT_EQ(_hist->data()[3].first, 0x1fffff90);
+    EXPECT_EQ(_hist->data()[3].second, 1);
+    EXPECT_EQ(_hist->data()[1].second, 1);
+    EXPECT_EQ(_hist->data()[6].second, 0);
+}

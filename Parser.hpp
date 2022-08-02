@@ -16,6 +16,7 @@ class Parser {
     ~Parser ();
     void Load(const std::string &path, std::unique_ptr<Cache> &c, const std::string format);
     void Parse(std::ifstream *f, std::unique_ptr<Cache> &c, const std::string format);
+    // load is 1, store is 0
     std::unique_ptr<std::vector<std::pair<int,int>>> ParseWithHistory(std::ifstream *f, std::unique_ptr<Cache> &_c, const std::string format);
 
     std::string format;

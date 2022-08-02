@@ -26,8 +26,8 @@ void Parser::Parse(std::ifstream *f, std::unique_ptr<Cache> &_c, const std::stri
         if (format == "simple") { 
             std::string a;
             int b;
-
-            if (!(iss >> a >> std::hex >> b)) {
+            int c;
+            if (!(iss >> a >> std::hex >> b >> c)) {
                 throw std::runtime_error("Format is off!");
                 break; 
             } // error 
