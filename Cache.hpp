@@ -96,7 +96,7 @@ class Cache {
     void dump_stats();
     void dump_state(bool meta = false);
     //int get_free_line(int level);
-    int get_free_line(unsigned addr, int invalid_index=0);
+    std::tuple<int, bool> get_free_line(unsigned addr, int type, int invalid_index=0);
     int do_updates(unsigned addr, int index);
     int do_updates_only_on_write(unsigned addr, int index);
     int do_cache_op(unsigned addr, int is_read);

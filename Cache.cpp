@@ -12,7 +12,7 @@ Cache::Cache (const std::string &name,
     this->associativity = associativity;
     this->capacity = capacity;
     this->rp = rp;
-    this->wp = PolicyWriteback; 
+    this->wp = wp; 
     
     this->set_offset = std::popcount(block_size - 1);
     this->sets = capacity / (block_size * associativity);
@@ -74,7 +74,7 @@ unsigned Cache::get_tag(unsigned address) {
     return address >> this->tag_offset;
 }
 
-int Cache::get_free_line(unsigned addr, int invalid_index) {
+std::tuple<int, bool> Cache::get_free_line(unsigned addr, int type, int invalid_index) {
     auto set = get_set(addr);
     auto tag = get_tag(addr);
     auto base = set * associativity;
@@ -122,14 +122,19 @@ int Cache::get_free_line(unsigned addr, int invalid_index) {
                         return a.CacheMeta.__fifo_count < b.CacheMeta.__fifo_count;
                     });
             index = std::distance(std::begin(local), min_element);
-            std::cout << "DISTANCE IS" << index << std::endl;
+            // std::cout << "DISTANCE IS" << index << std::endl;
             dirty_wb = local[index].dirty;
         }
+        /* 
+        else if (this->rp == ReplacementPolicy::PolicyRandom) {
+            index = 
+        }
+        */
     }
     
     local[index].__tag = tag;
-    //local[index].dirty |= type;  
-    return index;
+    local[index].dirty |= type;  
+    return {index, dirty_wb};
 }
 
 int Cache::do_updates_only_on_write(unsigned addr, int index) {
@@ -204,7 +209,7 @@ int Cache::do_cache_op(unsigned addr, int is_read)
         }
     }
     else {
-        rindex = this->get_free_line(addr, invalid_index);
+        rindex = std::get<0>(this->get_free_line(addr, true, invalid_index));
         // this->set_cache_item(item, addr);
         this->__stats.cache_miss_count++;
         if (is_read) {

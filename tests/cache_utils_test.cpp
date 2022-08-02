@@ -197,7 +197,7 @@ TEST(PriorTest, test_prior_3) {
     c->do_cache_op(0x233, 1);
     c->do_cache_op(0x136, 1);
     c->do_cache_op(0x133, 1);
-    EXPECT_EQ(c->get_free_line(0x323, -1), 0);
+    EXPECT_EQ(std::get<0>(c->get_free_line(0x323, true, -1)), 0);
     c->dump_state(true);
     
     // EXPECT_EQ(c->caches[0].CacheMeta.__count, 0);

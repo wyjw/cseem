@@ -52,6 +52,9 @@ def get_result_ucsd(binary):
     print("For file proj1/gcc.trace, we have: ")
     subprocess.run([binary, '-f', fnames[2], '-a', '8', '-b', '32', '-c', '65536', '-t', 'simple', '-s'], cwd=SOURCE_ROOT + '/examples') 
 
+def get_jhu_trace():
+    subprocess.run(['wget', 'https://jhucsf.github.io/spring2020/assign/assign03_traces/gcc.trace'])
+
 if __name__ == "__main__":
     __bin = str(get_main_binary())
     get_oberlin_trace()
