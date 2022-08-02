@@ -33,16 +33,16 @@ int Cache::check_cache_hit(unsigned addr, int* invalid_index, int type) {
     auto set = get_set(addr);
     auto tag = get_tag(addr);
     auto base = set * associativity;
-    std::span local{this->caches.data() + base, associativity}; //TODO: why?
+    std::span local{this->caches.data() + base, associativity};
 
     *invalid_index = -1;
 
     int index;
-    bool hit;
+    bool hit = false;
 
     for (auto i = 0;  i < local.size(); i++) {
         if (!local[i].valid) {
-            *invalid_index = i;
+            if (*invalid_index == -1) *invalid_index = i;
             continue;
         }
         auto ltag = local[i].__tag;
@@ -59,6 +59,7 @@ int Cache::check_cache_hit(unsigned addr, int* invalid_index, int type) {
 
         break; 
     }
+
     return hit;
 }
 
@@ -88,16 +89,18 @@ int Cache::get_free_line(unsigned addr, int invalid_index) {
         assert(&local[index] == &this->caches.data()[base + index]);
     }
     else {
-        auto max_element = std::max_element(this->caches.begin(), this->caches.end(),
+        // max is to kick out
+        auto max_element = std::max_element(local.begin(), local.end(),
                 // less is more -- 0 is best
                 // high priority: 0
                 // low prioerity: associativity - 1 
                 [](const class CacheLine &a, const class CacheLine &b) 
                 {
-                    return a.CacheMeta.__count > b.CacheMeta.__count;
+                    return a.CacheMeta.__count < b.CacheMeta.__count;
                 });
-        index = std::distance(this->caches.begin(), max_element);
-        // dirty_wb = local_dirty[index];
+        index = std::distance(local.begin(), max_element);
+        // std::cout << "DISTANCE IS" << index << std::endl;
+        dirty_wb = local[index].dirty;
     }
     
     local[index].__tag = tag;
@@ -109,19 +112,24 @@ int Cache::get_free_line(unsigned addr, int invalid_index) {
 }
 
 int Cache::do_updates(unsigned addr, int index) {
-    std::transform(std::begin(this->caches), std::end(this->caches),
-            std::begin(this->caches), 
+    auto set = get_set(addr);
+    auto tag = get_tag(addr);
+    auto base = set * associativity;
+    std::span local{this->caches.data() + base, associativity}; //TODO: why?
+    
+    std::transform(std::begin(local), std::end(local),
+            std::begin(local), 
             [&](CacheLine &a) {
-                if (a.CacheMeta.__count <= this->caches[index].CacheMeta.__count
+                if (a.CacheMeta.__count <= local[index].CacheMeta.__count
                         && a.CacheMeta.__count < associativity)
                     a.CacheMeta.__count += 1;
                 return a;
             });
 
     // current block has highest
-    this->caches[index].CacheMeta.__count = 0;
-    this->caches[index].CacheMeta.__lru_count = 0;
-    this->caches[index].CacheMeta.__fifo_count = 0;
+    local[index].CacheMeta.__count = 0;
+    local[index].CacheMeta.__lru_count = 0;
+    local[index].CacheMeta.__fifo_count = 0;
 
     return 0; 
 }
@@ -129,20 +137,32 @@ int Cache::do_updates(unsigned addr, int index) {
 int Cache::do_cache_op(unsigned addr, int is_read)
 {  
     int invalid_index;
-    auto index = this->check_cache_hit(addr, &invalid_index);
-    if (index) {
+    auto hit = this->check_cache_hit(addr, &invalid_index);
+    if (is_read) {
+        this->__stats.cache_read_count++;
+    }
+    else {
+        this->__stats.cache_write_count++;
+    }
+    if (hit) {
         this->__stats.cache_hit_count++;
+        if (is_read) {
+            this->__stats.cache_load_hit_count++;
+        }
+        else {
+            this->__stats.cache_store_hit_count++;
+        }
     }
     else {
         auto index = this->get_free_line(addr, invalid_index);
         // this->set_cache_item(item, addr);
+        this->__stats.cache_miss_count++;
         if (is_read) {
-            this->__stats.cache_read_count++;
+            this->__stats.cache_load_miss_count++;
         }
         else {
-            this->__stats.cache_write_count++;
+            this->__stats.cache_store_miss_count++;
         }
-        this->__stats.cache_miss_count++;
     }
     return 0;
 }
@@ -150,7 +170,11 @@ int Cache::do_cache_op(unsigned addr, int is_read)
 void Cache::dump_stats() {
     std::cout << "CACHE SETTINGS:" << std::endl;
     std::cout << "HITS:" << this->__stats.cache_hit_count << std::endl;
+    std::cout << "LOADHITS:" << this->__stats.cache_load_hit_count << std::endl;
+    std::cout << "STOREHITS:" << this->__stats.cache_store_hit_count << std::endl;
     std::cout << "MISS:" << this->__stats.cache_miss_count << std::endl;
+    std::cout << "LOADMISS:" << this->__stats.cache_load_miss_count << std::endl;
+    std::cout << "STOREMISS:" << this->__stats.cache_store_miss_count << std::endl;
     std::cout << "READS:" << this->__stats.cache_read_count << std::endl;
     std::cout << "WRITES:" << this->__stats.cache_write_count << std::endl;
     std::cout << "HITRATE:" << this->__stats.hit_rate() << std::endl;

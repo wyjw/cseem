@@ -46,6 +46,9 @@ void Parser::Parse(std::ifstream *f, std::unique_ptr<Cache> &_c, const std::stri
                 break;
             }
 
+            // we want read to be 1
+            if (a == 0) a = 1;
+            else a = 0;
             _c->do_cache_op(b, a);
         } 
     }

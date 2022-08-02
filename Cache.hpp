@@ -13,6 +13,7 @@
 #ifndef PROJECTNAME
 #define PROJECTNAME cseem
 #endif
+
 namespace PROJECTNAME {}
 using namespace PROJECTNAME;
 
@@ -60,7 +61,7 @@ class Cache {
 
     // Configuration parameters
     int block_size;
-    int associativity;
+    unsigned associativity;
     int capacity;
     int miss_penalty;
     int dirty_wb_penalty;
@@ -100,12 +101,16 @@ class Cache {
     // Run one iteration of an experiment
     struct Stats {
         float hit_rate() {
-            return cache_hit_count / (cache_hit_count + cache_miss_count);
+            return (float)cache_hit_count / (float)(cache_hit_count + cache_miss_count);
         };
         int cache_hit_count;
         int cache_miss_count;
         int cache_read_count;
         int cache_write_count;
+        int cache_store_hit_count;
+        int cache_load_hit_count;
+        int cache_store_miss_count;
+        int cache_load_miss_count;
     };
     struct Stats __stats;
 };
