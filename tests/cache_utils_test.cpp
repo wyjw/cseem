@@ -37,12 +37,12 @@ TEST(CacheTest, test_cache_2) {
 
     c->do_cache_op(0x10000001, 1);
     c->dump_state();
-    auto s = c->get_set(0x10000001) * assoc;
+    auto s = c->get_set(0x10000001) + 1;
     EXPECT_EQ(c->caches[s].valid, true);
     
     c->do_cache_op(0x3fffaa33, 1);
     c->dump_state();
-    auto g = c->get_set(0x3fffaa33) * assoc;
+    auto g = c->get_set(0x3fffaa33) + 1;
     EXPECT_EQ(c->caches[g].valid, true);
 }
 
@@ -179,6 +179,25 @@ TEST(PriorTest, test_prior_2) {
     EXPECT_EQ(c->caches[0].__tag, 0b01000110);
     c->do_cache_op(0x233, 1);
     c->do_cache_op(0x233, 1);
+    c->dump_state(true);
+    
+    EXPECT_EQ(c->caches[0].CacheMeta.__count, 0);
+}
+
+TEST(PriorTest, test_prior_3) {
+    // same read
+    // https://www3.ntu.edu.sg/home/smitha/ParaCache/Paracache/dmc.html
+    // cache size: 8
+    // memory size: 2048
+    // offset bits: 2
+    int assoc = 1;
+    auto c = std::make_unique<Cache>("cache1", assoc, 4, 8, Cache::ReplacementPolicy::PolicyLRU, Cache::WritePolicy::PolicyWriteback);
+
+    c->do_cache_op(0x23, 1);
+    c->do_cache_op(0x233, 1);
+    c->do_cache_op(0x136, 1);
+    c->do_cache_op(0x133, 1);
+    EXPECT_EQ(c->get_free_line(0x323, -1), 0);
     c->dump_state(true);
     
     EXPECT_EQ(c->caches[0].CacheMeta.__count, 0);

@@ -88,10 +88,13 @@ int Cache::get_free_line(unsigned addr, int invalid_index) {
         assert(&local[index] == &this->caches.data()[base + index]);
     }
     else {
-        auto max_element = std::max_element(this->caches.begin(), this->caches.end(), 
+        auto max_element = std::max_element(this->caches.begin(), this->caches.end(),
+                // less is more -- 0 is best
+                // high priority: 0
+                // low prioerity: associativity - 1 
                 [](const class CacheLine &a, const class CacheLine &b) 
                 {
-                    return a.CacheMeta.__count < b.CacheMeta.__count;
+                    return a.CacheMeta.__count > b.CacheMeta.__count;
                 });
         index = std::distance(this->caches.begin(), max_element);
         // dirty_wb = local_dirty[index];
@@ -108,8 +111,8 @@ int Cache::get_free_line(unsigned addr, int invalid_index) {
 int Cache::do_updates(unsigned addr, int index) {
     std::transform(std::begin(this->caches), std::end(this->caches),
             std::begin(this->caches), 
-            [&](CacheLine a) {
-                if (a.CacheMeta.__count < this->caches[index].CacheMeta.__count
+            [&](CacheLine &a) {
+                if (a.CacheMeta.__count <= this->caches[index].CacheMeta.__count
                         && a.CacheMeta.__count < associativity)
                     a.CacheMeta.__count += 1;
                 return a;
