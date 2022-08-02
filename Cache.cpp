@@ -29,7 +29,7 @@ Cache::~Cache ()
 {
 }
 
-int Cache::check_cache_hit(unsigned addr, int* invalid_index, int type) {
+int Cache::check_cache_hit(unsigned addr, int* invalid_index, int* rindex, int type) {
     auto set = get_set(addr);
     auto tag = get_tag(addr);
     auto base = set * associativity;
@@ -39,10 +39,10 @@ int Cache::check_cache_hit(unsigned addr, int* invalid_index, int type) {
 
     int index;
     bool hit = false;
-
-    for (auto i = 0;  i < local.size(); i++) {
+    
+    for (auto i = 0u; i < local.size(); i++) {
         if (!local[i].valid) {
-            if (*invalid_index == -1) *invalid_index = i;
+            if(*invalid_index == -1) *invalid_index = i;
             continue;
         }
         auto ltag = local[i].__tag;
@@ -59,7 +59,7 @@ int Cache::check_cache_hit(unsigned addr, int* invalid_index, int type) {
 
         break; 
     }
-
+    *rindex = index;
     return hit;
 }
 
@@ -76,7 +76,7 @@ int Cache::get_free_line(unsigned addr, int invalid_index) {
     auto set = get_set(addr);
     auto tag = get_tag(addr);
     auto base = set * associativity;
-    std::span local{this->caches.data() + base, associativity}; //TODO: why?
+    std::span local{this->caches.data() + base, associativity};
     
     auto dirty_wb = false;
    // try to get an invalid index
@@ -89,6 +89,7 @@ int Cache::get_free_line(unsigned addr, int invalid_index) {
         assert(&local[index] == &this->caches.data()[base + index]);
     }
     else {
+        /*
         // max is to kick out
         auto max_element = std::max_element(local.begin(), local.end(),
                 // less is more -- 0 is best
@@ -98,16 +99,24 @@ int Cache::get_free_line(unsigned addr, int invalid_index) {
                 {
                     return a.CacheMeta.__count < b.CacheMeta.__count;
                 });
-        index = std::distance(local.begin(), max_element);
-        // std::cout << "DISTANCE IS" << index << std::endl;
+        index = std::distance(std::begin(local), max_element);
+       uu // std::cout << "DISTANCE IS" << index << std::endl;
         dirty_wb = local[index].dirty;
+        */
+       if (this->rp == ReplacementPolicy::PolicyLRU) { 
+            auto min_element = std::min_element(local.begin(), local.end(),
+                    [](const class CacheLine &a, const class CacheLine &b) 
+                    {
+                        return a.CacheMeta.__lru_count < b.CacheMeta.__lru_count;
+                    });
+            index = std::distance(std::begin(local), min_element);
+            // std::cout << "DISTANCE IS" << index << std::endl;
+            dirty_wb = local[index].dirty;
+       }
     }
     
     local[index].__tag = tag;
-    // this->caches[index].dirty |= type; 
-
-    this->do_updates(addr, index);
-    
+    //local[index].dirty |= type;  
     return index;
 }
 
@@ -128,8 +137,9 @@ int Cache::do_updates(unsigned addr, int index) {
 
     // current block has highest
     local[index].CacheMeta.__count = 0;
-    local[index].CacheMeta.__lru_count = 0;
-    local[index].CacheMeta.__fifo_count = 0;
+    // local[index].CacheMeta.__lru_count = 0;
+    // local[index].CacheMeta.__fifo_count = 0;
+    local[index].CacheMeta.__lru_count = this->clock_count;
 
     return 0; 
 }
@@ -137,7 +147,8 @@ int Cache::do_updates(unsigned addr, int index) {
 int Cache::do_cache_op(unsigned addr, int is_read)
 {  
     int invalid_index;
-    auto hit = this->check_cache_hit(addr, &invalid_index);
+    int rindex;
+    auto hit = this->check_cache_hit(addr, &invalid_index, &rindex);
     if (is_read) {
         this->__stats.cache_read_count++;
     }
@@ -154,7 +165,7 @@ int Cache::do_cache_op(unsigned addr, int is_read)
         }
     }
     else {
-        auto index = this->get_free_line(addr, invalid_index);
+        rindex = this->get_free_line(addr, invalid_index);
         // this->set_cache_item(item, addr);
         this->__stats.cache_miss_count++;
         if (is_read) {
@@ -164,6 +175,10 @@ int Cache::do_cache_op(unsigned addr, int is_read)
             this->__stats.cache_store_miss_count++;
         }
     }
+    this->do_updates(addr, rindex);
+
+    // keep track of environment variables 
+    this->clock_count++;
     return 0;
 }
 

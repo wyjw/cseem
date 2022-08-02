@@ -44,14 +44,17 @@ def get_result_oberlin(binary):
     subprocess.run([binary, '-f', 'traces/mcf.trace', '-a', '8', '-b', '32', '-c', '65536', '-s'], cwd=SOURCE_ROOT + '/examples') 
 
 def get_result_ucsd(binary):
-    print("For file art.trace, we have: ")
-    subprocess.run([binary, '-f', 'proj1/traces/mcf.trace', '-a', '1', '-b', '16', '-c', '16384', '-s'], cwd=SOURCE_ROOT + '/examples') 
-    print("For file mcf.trace, we have: ")
-    subprocess.run([binary, '-f', 'proj1/traces/swim.trace', '-a', '8', '-b', '32', '-c', '65536', '-s'], cwd=SOURCE_ROOT + '/examples') 
+    fnames = ['proj1/traces/mcf.trace', 'proj1/traces/swim.trace', 'proj1/traces/gcc.trace']
+    print("For file proj1/mcf.trace, we have: ")
+    subprocess.run([binary, '-f', fnames[0], '-a', '1', '-b', '16', '-c', '16384', '-t', 'simple', '-s'], cwd=SOURCE_ROOT + '/examples') 
+    print("For file proj1/swim.trace, we have: ")
+    subprocess.run([binary, '-f', fnames[1], '-a', '8', '-b', '32', '-c', '65536', '-t', 'simple', '-s'], cwd=SOURCE_ROOT + '/examples') 
+    print("For file proj1/gcc.trace, we have: ")
+    subprocess.run([binary, '-f', fnames[2], '-a', '8', '-b', '32', '-c', '65536', '-t', 'simple', '-s'], cwd=SOURCE_ROOT + '/examples') 
 
 if __name__ == "__main__":
     __bin = str(get_main_binary())
-    # get_oberlin_trace()
-    # get_result_oberlin(__bin)
-    get_ucsd_trace()
-    get_result_ucsd(__bin)
+    get_oberlin_trace()
+    get_result_oberlin(__bin)
+    # get_ucsd_trace()
+    # get_result_ucsd(__bin)

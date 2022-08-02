@@ -2,3 +2,5 @@ __MACOSX/
 traces/
 *.zip
 *.tar.gz
+FindHao/
+simple_cache_sim/

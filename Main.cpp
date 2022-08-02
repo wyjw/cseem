@@ -82,7 +82,7 @@ int main(int argc, char *argv[]) {
     
     const std::string &tmp_format = argparser.getCmdOption("-t");
     if (!tmp_format.empty()) {
-        if (tmp_format != "hw" or tmp_format != "simple")
+        if (tmp_format != "hw" and tmp_format != "simple")
             throw std::runtime_error("Not valid format!"); 
         format = tmp_format;
     }
@@ -96,7 +96,7 @@ int main(int argc, char *argv[]) {
 
     auto c = std::make_unique<Cache>("cache1", associativity, block_size, capacity, Cache::ReplacementPolicy::PolicyLRU, Cache::WritePolicy::PolicyWriteback);
 
-    parser->Load(filename, c, "hw");
+    parser->Load(filename, c, format);
 
     if (dump_table)
         c->dump_state();

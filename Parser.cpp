@@ -18,22 +18,33 @@ int string_to_read_op(std::string rd) {
     return -1;
 }
 
+int char_to_read_op(char rd) {
+    if (rd == 'l') {
+        return 1;
+    }
+    else if (rd == 's') {
+        return 0;
+    }
+
+    return -1;
+}
+
 void Parser::Parse(std::ifstream *f, std::unique_ptr<Cache> &_c, const std::string format) {
     std::string line;
     while (std::getline(*f, line))
     {
         std::istringstream iss(line);
         if (format == "simple") { 
-            std::string a;
-            int b;
-            int c;
+            char a;
+            unsigned b;
+            unsigned c;
             if (!(iss >> a >> std::hex >> b >> c)) {
-                throw std::runtime_error("Format is off!");
+                throw std::runtime_error("Format is off! P");
                 break; 
             } // error 
 
             // do stuff with line
-            _c->do_cache_op(b, string_to_read_op(a));
+            _c->do_cache_op(b, char_to_read_op(a));
         } 
         else if (format == "hw") {
             char ch;

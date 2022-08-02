@@ -60,11 +60,11 @@ class Cache {
     };
 
     // Configuration parameters
-    int block_size;
+    unsigned block_size;
     unsigned associativity;
-    int capacity;
-    int miss_penalty;
-    int dirty_wb_penalty;
+    unsigned capacity;
+    unsigned miss_penalty;
+    unsigned dirty_wb_penalty;
     
     unsigned set_offset;
     unsigned sets;
@@ -72,6 +72,8 @@ class Cache {
     unsigned set_bits;
     unsigned num_blocks;
     unsigned tag_offset;
+
+    unsigned clock_count;
     // offsets
     // |**** TAG ****|**** SET ****|**** OFFSET ****|
 
@@ -90,7 +92,7 @@ class Cache {
             WritePolicy wp);
     ~Cache();
 
-    int check_cache_hit(unsigned addr, int* invalid_index, int type = 0);
+    int check_cache_hit(unsigned addr, int* invalid_index, int* rindex, int type = 0);
     void dump_stats();
     void dump_state(bool meta = false);
     //int get_free_line(int level);
