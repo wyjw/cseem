@@ -348,3 +348,52 @@ TEST(CacheTest, test_cache_11) {
     EXPECT_EQ(c->caches[1].valid, true);
     EXPECT_EQ(c->caches[1].__tag, 0x9a);
 }
+
+TEST(CacheTest, test_cache_12) {
+    // https://www3.ntu.edu.sg/home/smitha/ParaCache/Paracache/dmc.html
+    // cache size: 16
+    // memory size: 4096
+    // offset bits: 2
+    int assoc = 4;
+    auto c = std::make_unique<Cache>("cache1", assoc, 4, 16, Cache::ReplacementPolicy::PolicyLRU, Cache::WritePolicy::PolicyWriteback);
+
+    c->do_cache_op(0x12, 1);
+    c->dump_state(true);
+    EXPECT_EQ(c->caches[0].valid, true);
+    EXPECT_EQ(c->caches[0].__tag, 0b0100);
+
+    c->do_cache_op(0x12, 0);
+    c->dump_state(true);
+    EXPECT_EQ(c->caches[0].valid, true);
+    EXPECT_EQ(c->caches[0].__tag, 0b0100);
+    EXPECT_EQ(c->caches[0].dirty, true);
+   
+    c->do_cache_op(0x12, 1);
+    c->dump_state(true);
+    EXPECT_EQ(c->caches[0].valid, true);
+    EXPECT_EQ(c->caches[0].__tag, 0b0100);
+    EXPECT_EQ(c->caches[0].dirty, true); 
+
+    c->do_cache_op(0x16, 1);
+    c->dump_state(true);
+    EXPECT_EQ(c->caches[1].valid, true);
+    EXPECT_EQ(c->caches[1].__tag, 0b0101);
+    EXPECT_EQ(c->caches[0].dirty, true); 
+    
+    c->do_cache_op(0x24, 1);
+    c->dump_state(true);
+    EXPECT_EQ(c->caches[2].valid, true);
+    EXPECT_EQ(c->caches[2].__tag, 0b1001);
+    EXPECT_EQ(c->caches[2].dirty, false); 
+    
+    c->do_cache_op(0x324, 1);
+    c->dump_state(true);
+    EXPECT_EQ(c->caches[3].valid, true);
+    EXPECT_EQ(c->caches[3].dirty, false); 
+    
+    c->do_cache_op(0x200, 1);
+    c->dump_state(true);
+    EXPECT_EQ(c->caches[0].__tag, 0b010000000);
+    EXPECT_EQ(c->caches[0].valid, true);
+    EXPECT_EQ(c->caches[0].dirty, false); 
+}

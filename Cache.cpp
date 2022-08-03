@@ -57,7 +57,8 @@ int Cache::check_cache_hit(unsigned addr, int* invalid_index, int* rindex, int t
         index = i;
 
         // update dirty flag, if needed
-        local[i].dirty |= type;
+        if (type == 0)
+            local[i].dirty |= true;
 
         break; 
     }
@@ -77,6 +78,7 @@ unsigned Cache::get_tag(unsigned address) {
 std::tuple<int, bool> Cache::get_free_line(unsigned addr, int type, int invalid_index) {
     auto set = get_set(addr);
     auto tag = get_tag(addr);
+ 
     auto base = set * associativity;
     std::span local{this->caches.data() + base, associativity};
     
@@ -133,7 +135,8 @@ std::tuple<int, bool> Cache::get_free_line(unsigned addr, int type, int invalid_
     }
     
     local[index].__tag = tag;
-    local[index].dirty |= type;  
+    if (type == 0) local[index].dirty = true;
+    else local[index].dirty = false; 
     return {index, dirty_wb};
 }
 
@@ -188,11 +191,12 @@ int Cache::do_updates(unsigned addr, int index) {
     return 0; 
 }
 
+// read is 1
 int Cache::do_cache_op(unsigned addr, int is_read)
 {  
     int invalid_index;
     int rindex;
-    auto hit = this->check_cache_hit(addr, &invalid_index, &rindex);
+    auto hit = this->check_cache_hit(addr, &invalid_index, &rindex, is_read);
     if (is_read) {
         this->__stats.cache_read_count++;
     }
@@ -209,7 +213,12 @@ int Cache::do_cache_op(unsigned addr, int is_read)
         }
     }
     else {
-        rindex = std::get<0>(this->get_free_line(addr, true, invalid_index));
+        if (is_read == 1) {
+            rindex = std::get<0>(this->get_free_line(addr, true, invalid_index));
+        }
+        else {
+            rindex = std::get<0>(this->get_free_line(addr, false, invalid_index));
+        }
         // this->set_cache_item(item, addr);
         this->__stats.cache_miss_count++;
         if (is_read) {
