@@ -10,6 +10,8 @@ mkdir build
 cd build
 cmake ..
 make -j4
+cd examples
+python3 get_trace.py
 ```
 
 Features:
