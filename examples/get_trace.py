@@ -22,10 +22,10 @@ def get_oberlin_trace():
         Path(trace_dir).mkdir()
         if not Path(trace_dir + "/traces.zip").is_file():
             subprocess.run(['wget', 'https://occs.oberlin.edu/~ctaylor/classes/210SP13/traces.zip'])
-    subprocess.run(['unzip', 'traces.zip'])
+    subprocess.run(['unzip', '-n', 'traces.zip'])
     subprocess.run(['rm', '-rf', '__MACOSX'])
-    subprocess.run(['gunzip', 'traces/art.trace.gz'])
-    subprocess.run(['gunzip', 'traces/mcf.trace.gz'])
+    subprocess.run(['gunzip', '-f', 'traces/art.trace.gz'])
+    subprocess.run(['gunzip', '-f', 'traces/mcf.trace.gz'])
 
 def get_ucsd_trace():
     trace_dir = SOURCE_ROOT + "/traces"
