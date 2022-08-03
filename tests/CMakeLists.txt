@@ -72,7 +72,7 @@ add_custom_target(
 add_dependencies(parser_test copycachescript)
 add_dependencies(parser_test copycachelist)
 add_dependencies(parser_test copytrace)
-add_dependencies(parser_test run)
+# add_dependencies(parser_test run)
 
 add_executable(
     cache_utils_test
