@@ -77,7 +77,8 @@ if __name__ == "__main__":
     
     get_ucsd_trace()
     get_result_ucsd(__bin)
-    
+   
+    '''
     rdict = {}
     highest_hit = 0.0
     tup = None
@@ -95,6 +96,8 @@ if __name__ == "__main__":
         print(f"Best Config for {trace} @ {_c}:", tup)
     
     _c = 4096
+    highest_hit = 0.0
+    tup = None
     for trace in ['art', 'mcf']: 
         for _a in [1,2,4]:
             for _b in [1,2,4,8,16,32,64,128, 256,512,1024]:
@@ -105,3 +108,4 @@ if __name__ == "__main__":
                         highest_hit = float(r['HITRATE'])
                         tup = (_a, _b, _r, _c)
         print(f"Best Config for {trace} @ {_c}:", tup)
+    '''
