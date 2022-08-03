@@ -1,0 +1,2 @@
+./main -f ../examples/traces/art.trace -s -a 1 -b 16 -c 16384
+./main -f ../examples/traces/mcf.trace -s -a 8 -b 32 -c 65536

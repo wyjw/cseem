@@ -45,6 +45,8 @@ int main(int argc, char *argv[]) {
     bool dump_table = false;
     bool print_stats = false;
     std::string format = "hw";
+    auto write = Cache::WritePolicy::PolicyWriteback;
+    auto replace = Cache::ReplacementPolicy::PolicyLRU;
 
     // cache config options
     unsigned associativity = 1;
@@ -65,6 +67,8 @@ int main(int argc, char *argv[]) {
         std::cout << std::left << std::setw(_w) << "-a: associativity" << std::endl; 
         std::cout << std::left << std::setw(_w) << "-b: block size" << std::endl; 
         std::cout << std::left << std::setw(_w) << "-c: capacity" << std::endl; 
+        std::cout << std::left << std::setw(_w) << "-r: replace-policy: L or F or R (default = LRU)" << std::endl; 
+        std::cout << std::left << std::setw(_w) << "-w: write-policy: T or B (default = writeback)" << std::endl; 
         exit(0);
     } 
     else { 
@@ -78,6 +82,30 @@ int main(int argc, char *argv[]) {
     if (filename.empty()) {
         std::cout << "Please input a filename under -f" << std::endl;
         throw std::runtime_error("Filename is empty!"); 
+    }
+    
+    const std::string &tmp_write = argparser.getCmdOption("-w");
+    if (!tmp_write.empty()) {
+        if (tmp_write != "T" and tmp_write != "B")
+            throw std::runtime_error("Not valid format!"); 
+        if (tmp_write == "T") {
+            write = Cache::WritePolicy::PolicyWritethrough; 
+        } else if (tmp_write == "B") {
+            write = Cache::WritePolicy::PolicyWriteback; 
+        }
+    }
+    
+    const std::string &tmp_replace = argparser.getCmdOption("-r");
+    if (!tmp_replace.empty()) {
+        if (tmp_replace != "L" and tmp_replace != "F" and tmp_replace != "R")
+            throw std::runtime_error("Not valid format!"); 
+        if (tmp_replace == "L") {
+            replace = Cache::ReplacementPolicy::PolicyLRU; 
+        } else if (tmp_replace == "F") {
+            replace = Cache::ReplacementPolicy::PolicyFIFO; 
+        } else if (tmp_replace == "R") {
+            replace = Cache::ReplacementPolicy::PolicyRandom;
+        }
     }
     
     const std::string &tmp_format = argparser.getCmdOption("-t");
@@ -94,7 +122,7 @@ int main(int argc, char *argv[]) {
     const std::string &tmp_cap = argparser.getCmdOption("-c");
     if (!tmp_cap.empty()) capacity = std::stoul(tmp_cap);
 
-    auto c = std::make_unique<Cache>("cache1", associativity, block_size, capacity, Cache::ReplacementPolicy::PolicyLRU, Cache::WritePolicy::PolicyWriteback);
+    auto c = std::make_unique<Cache>("cache1", associativity, block_size, capacity, replace, write);
 
     parser->Load(filename, c, format);
 

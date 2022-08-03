@@ -55,9 +55,43 @@ def get_result_ucsd(binary):
 def get_jhu_trace():
     subprocess.run(['wget', 'https://jhucsf.github.io/spring2020/assign/assign03_traces/gcc.trace'])
 
+def get_result_oberlin_cust(binary, result_dict, trace = 'art', a = 1, b = 64, c = 16384, r = 'L', w = 'B'):
+    result_dict['oberlin'] = {}
+    if trace == 'art':
+        print("For file art.trace, we have: ")
+        out = subprocess.check_output([binary, '-f', 'traces/art.trace', '-a', str(a), '-b', str(b), '-c', str(c), '-r', str(r), '-w', str(w),'-s'], cwd=SOURCE_ROOT + '/examples')
+        dct = parse(out, result_dict['oberlin'])
+    elif trace == 'mcf':
+        print("For file mcf.trace, we have: ")
+        out = subprocess.check_output([binary, '-f', 'traces/mcf.trace', '-a', a, '-b', b, '-c', c, '-r', str(r), '-w', str(w), '-s'], cwd=SOURCE_ROOT + '/examples') 
+    return result_dict['oberlin']
+
+def parse(string, result_dict):
+    for line in string.split():
+        line = line.decode("utf-8")
+        if ':' in line:
+            name = line.split(':')[0]
+            value = line.split(':')[1]
+            result_dict[name] = value
+
 if __name__ == "__main__":
     __bin = str(get_main_binary())
     get_oberlin_trace()
     get_result_oberlin(__bin)
+    
+    rdict = {}
+    highest_hit = 0.0
+    tup = None
+    _c = 16384
+    for _a in [1,2,4,8,16]:
+        # for _b in [1,2,4,8,16,32,64,128]:
+        for _b in [32]:
+            for _r in ['L', 'F']:
+                r = get_result_oberlin_cust(__bin, rdict, a=_a, b=_b, c=_c, r=_r)
+                if float(r['HITRATE']) > highest_hit:
+                    highest_hit = float(r['HITRATE'])
+                    tup = (_a, _b, _r, _c)
+
+    print("Best Config:", tup)
     # get_ucsd_trace()
     # get_result_ucsd(__bin)
