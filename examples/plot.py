@@ -68,10 +68,10 @@ def get_result_oberlin_capacity(binary, result_dict):
         get_result_oberlin(binary, result_dict[i], c = i)
 
 def get_result_oberlin_bsize(binary, result_dict):
-    for i in range(0, 8):
+    for i in range(0, 11):
         i = 2 ** i
         result_dict[i] = {}
-        get_result_oberlin(binary, result_dict[i], a = 2, b = i, c = 65536)
+        get_result_oberlin(binary, result_dict[i], a = 2, b = i, c = 4096)
 
 def get_result_oberlin_replace(binary, result_dict):
     for i in ['L', 'F']:
@@ -174,3 +174,4 @@ if __name__ == "__main__":
         var_x.append(num)
         var_y.append(float(rdict[num]['oberlin']['HITRATE']))
     plot(var_x, var_y, var_x_name, var_y_name, title, 'replacementvhitrate')
+    

@@ -92,4 +92,16 @@ if __name__ == "__main__":
                         highest_hit = float(r['HITRATE'])
                         tup = (_a, _r, _c)
 
-        print(f"Best Config for {trace}:", tup)
+        print(f"Best Config for {trace} @ {_c}:", tup)
+    
+    _c = 4096
+    for trace in ['art', 'mcf']: 
+        for _a in [1,2,4]:
+            for _b in [1,2,4,8,16,32,64,128, 256,512,1024]:
+            # for _b in [32]:
+                for _r in ['L', 'F']:
+                    r = get_result_oberlin_cust(__bin, rdict, a=_a, b=_b, c=_c, r=_r)
+                    if float(r['HITRATE']) > highest_hit:
+                        highest_hit = float(r['HITRATE'])
+                        tup = (_a, _b, _r, _c)
+        print(f"Best Config for {trace} @ {_c}:", tup)
