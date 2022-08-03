@@ -69,7 +69,7 @@ add_custom_target(
     COMMENT "Generating comparison cache libs."
 )
 
-add_dependencies(parser_test copycachescript)
+# add_dependencies(parser_test copycachescript)
 add_dependencies(parser_test copycachelist)
 add_dependencies(parser_test copytrace)
 # add_dependencies(parser_test run)
