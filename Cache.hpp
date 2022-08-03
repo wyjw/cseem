@@ -28,6 +28,7 @@ class Cache {
     ReplacementPolicy rp;
 
     enum WritePolicy {
+        PolicyWritethrough,
         PolicyWriteback
     };
     WritePolicy wp;
@@ -114,6 +115,7 @@ class Cache {
         int cache_load_hit_count;
         int cache_store_miss_count;
         int cache_load_miss_count;
+        int cache_dirty_wb_count;
     };
     struct Stats __stats;
 };

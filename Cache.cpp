@@ -57,8 +57,10 @@ int Cache::check_cache_hit(unsigned addr, int* invalid_index, int* rindex, int t
         index = i;
 
         // update dirty flag, if needed
-        if (type == 0)
-            local[i].dirty |= true;
+        if (this->wp == WritePolicy::PolicyWriteback) {
+            if (type == 0)
+                local[i].dirty = true;
+        }
 
         break; 
     }
@@ -115,7 +117,9 @@ std::tuple<int, bool> Cache::get_free_line(unsigned addr, int type, int invalid_
                     });
             index = std::distance(std::begin(local), min_element);
             // std::cout << "DISTANCE IS" << index << std::endl;
-            dirty_wb = local[index].dirty;
+            if (this->wp == WritePolicy::PolicyWriteback) {
+                dirty_wb = local[index].dirty;
+            }
        }  
        else if (this->rp == ReplacementPolicy::PolicyFIFO) {
             auto min_element = std::min_element(local.begin(), local.end(),
@@ -125,7 +129,9 @@ std::tuple<int, bool> Cache::get_free_line(unsigned addr, int type, int invalid_
                     });
             index = std::distance(std::begin(local), min_element);
             // std::cout << "DISTANCE IS" << index << std::endl;
-            dirty_wb = local[index].dirty;
+            if (this->wp == WritePolicy::PolicyWriteback) {
+                dirty_wb = local[index].dirty;
+            }
         }
         /* 
         else if (this->rp == ReplacementPolicy::PolicyRandom) {
@@ -135,8 +141,10 @@ std::tuple<int, bool> Cache::get_free_line(unsigned addr, int type, int invalid_
     }
     
     local[index].__tag = tag;
-    if (type == 0) local[index].dirty = true;
-    else local[index].dirty = false; 
+    if (this->wp == WritePolicy::PolicyWriteback) {
+        if (type == 0) local[index].dirty = true;
+        else local[index].dirty = false;
+    }
     return {index, dirty_wb};
 }
 
@@ -196,12 +204,15 @@ int Cache::do_cache_op(unsigned addr, int is_read)
 {  
     int invalid_index;
     int rindex;
+    bool dirty_wb;
     auto hit = this->check_cache_hit(addr, &invalid_index, &rindex, is_read);
     if (is_read) {
         this->__stats.cache_read_count++;
     }
     else {
-        this->__stats.cache_write_count++;
+        if (this->wp == WritePolicy::PolicyWritethrough) {
+            this->__stats.cache_write_count++;
+        }
     }
     if (hit) {
         this->__stats.cache_hit_count++;
@@ -213,11 +224,18 @@ int Cache::do_cache_op(unsigned addr, int is_read)
         }
     }
     else {
+        std::tuple<int, bool> tup;
         if (is_read == 1) {
-            rindex = std::get<0>(this->get_free_line(addr, true, invalid_index));
+            tup = this->get_free_line(addr, true, invalid_index);
+            rindex = std::get<0>(tup);
         }
         else {
-            rindex = std::get<0>(this->get_free_line(addr, false, invalid_index));
+            tup = this->get_free_line(addr, false, invalid_index);
+            rindex = std::get<0>(tup);
+        }
+        dirty_wb = std::get<1>(tup);
+        if (this->wp == WritePolicy::PolicyWriteback && dirty_wb) {
+            this->__stats.cache_dirty_wb_count++;
         }
         // this->set_cache_item(item, addr);
         this->__stats.cache_miss_count++;
@@ -247,6 +265,7 @@ void Cache::dump_stats() {
     std::cout << "READS:" << this->__stats.cache_read_count << std::endl;
     std::cout << "WRITES:" << this->__stats.cache_write_count << std::endl;
     std::cout << "HITRATE:" << this->__stats.hit_rate() << std::endl;
+    std::cout << "DIRTYWB:" << this->__stats.cache_dirty_wb_count << std::endl;
 }
 
 // pretty print the cache state
