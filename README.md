@@ -18,3 +18,8 @@ Extensible parser
 Different policies (LRU, FIFO, random)
 Table printer
 ```
+
+Example Usage
+```
+./main -f traces/art.trace -a 8 -b 32 -c 65536 -t simple -s
+```
