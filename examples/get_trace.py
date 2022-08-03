@@ -45,12 +45,8 @@ def get_result_oberlin(binary):
 
 def get_result_ucsd(binary):
     fnames = ['proj1/traces/mcf.trace', 'proj1/traces/swim.trace', 'proj1/traces/gcc.trace']
-    print("For file proj1/mcf.trace, we have: ")
-    subprocess.run([binary, '-f', fnames[0], '-a', '1', '-b', '16', '-c', '16384', '-t', 'simple', '-s'], cwd=SOURCE_ROOT + '/examples') 
-    print("For file proj1/swim.trace, we have: ")
-    subprocess.run([binary, '-f', fnames[1], '-a', '8', '-b', '32', '-c', '65536', '-t', 'simple', '-s'], cwd=SOURCE_ROOT + '/examples') 
     print("For file proj1/gcc.trace, we have: ")
-    subprocess.run([binary, '-f', fnames[2], '-a', '8', '-b', '32', '-c', '65536', '-t', 'simple', '-s'], cwd=SOURCE_ROOT + '/examples') 
+    subprocess.run([binary, '-f', fnames[2], '-a', '4', '-b', '16', '-c', '16384', '-t', 'simple', '-r', 'F', '-s'], cwd=SOURCE_ROOT + '/examples') 
 
 def get_jhu_trace():
     subprocess.run(['wget', 'https://jhucsf.github.io/spring2020/assign/assign03_traces/gcc.trace'])
@@ -58,11 +54,11 @@ def get_jhu_trace():
 def get_result_oberlin_cust(binary, result_dict, trace = 'art', a = 1, b = 64, c = 16384, r = 'L', w = 'B'):
     result_dict['oberlin'] = {}
     if trace == 'art':
-        print("For file art.trace, we have: ")
+        # print("For file art.trace, we have: ")
         out = subprocess.check_output([binary, '-f', 'traces/art.trace', '-a', str(a), '-b', str(b), '-c', str(c), '-r', str(r), '-w', str(w),'-s'], cwd=SOURCE_ROOT + '/examples')
         dct = parse(out, result_dict['oberlin'])
     elif trace == 'mcf':
-        print("For file mcf.trace, we have: ")
+        # print("For file mcf.trace, we have: ")
         out = subprocess.check_output([binary, '-f', 'traces/mcf.trace', '-a', a, '-b', b, '-c', c, '-r', str(r), '-w', str(w), '-s'], cwd=SOURCE_ROOT + '/examples') 
     return result_dict['oberlin']
 
@@ -79,19 +75,21 @@ if __name__ == "__main__":
     get_oberlin_trace()
     get_result_oberlin(__bin)
     
+    get_ucsd_trace()
+    get_result_ucsd(__bin)
+    
     rdict = {}
     highest_hit = 0.0
     tup = None
     _c = 16384
-    for _a in [1,2,4,8,16]:
-        # for _b in [1,2,4,8,16,32,64,128]:
-        for _b in [32]:
-            for _r in ['L', 'F']:
-                r = get_result_oberlin_cust(__bin, rdict, a=_a, b=_b, c=_c, r=_r)
-                if float(r['HITRATE']) > highest_hit:
-                    highest_hit = float(r['HITRATE'])
-                    tup = (_a, _b, _r, _c)
+    for trace in ['art', 'mcf']: 
+        for _a in [1,2,4,8,16]:
+            # for _b in [1,2,4,8,16,32,64,128]:
+            for _b in [32]:
+                for _r in ['L', 'F']:
+                    r = get_result_oberlin_cust(__bin, rdict, a=_a, b=_b, c=_c, r=_r)
+                    if float(r['HITRATE']) > highest_hit:
+                        highest_hit = float(r['HITRATE'])
+                        tup = (_a, _r, _c)
 
-    print("Best Config:", tup)
-    # get_ucsd_trace()
-    # get_result_ucsd(__bin)
+        print(f"Best Config for {trace}:", tup)
