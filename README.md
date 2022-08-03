@@ -1,4 +1,4 @@
-CSEEM
+# CSEEM
 
 The Cache Simulator
 
@@ -10,4 +10,11 @@ mkdir build
 cd build
 cmake ..
 make -j4
+```
+
+Features:
+```
+Extensible parser
+Different policies (LRU, FIFO, random)
+Table printer
 ```
